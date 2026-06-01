@@ -149,6 +149,9 @@ public class InAppUpdateMePlugin: NSObject, FlutterPlugin, URLSessionDownloadDel
                 if let releaseNotes = json["releaseNotes"] as? String {
                     resultMap["releaseNotes"] = releaseNotes
                 }
+                if let forceUpdate = json["forceUpdate"] as? Bool {
+                    resultMap["forceUpdate"] = forceUpdate
+                }
 
                 result(resultMap)
             }
