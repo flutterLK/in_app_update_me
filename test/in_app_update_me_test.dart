@@ -62,10 +62,11 @@ void main() {
     MockInAppUpdateMePlatform fakePlatform = MockInAppUpdateMePlatform();
     InAppUpdateMePlatform.instance = fakePlatform;
 
-    final updateInfo = await inAppUpdateMePlugin.checkForUpdate();
-    expect(updateInfo?.updateAvailable, true);
-    expect(updateInfo?.immediateUpdateAllowed, true);
-    expect(updateInfo?.flexibleUpdateAllowed, true);
+    final result = await inAppUpdateMePlugin.checkForUpdate(currentVersion: '1.0.0');
+    expect(result, isNotNull);
+    expect(result!.updateAvailable, true);
+    expect(result.immediateUpdateAllowed, true);
+    expect(result.flexibleUpdateAllowed, true);
   });
 
   test('startFlexibleUpdate', () async {
@@ -97,23 +98,86 @@ void main() {
       useStore: true,
       forceUpdate: false,
       checkInterval: Duration(hours: 24),
+      showProgressDialog: true,
+      autoCheckOnAppStart: true,
     );
 
     expect(config.useStore, true);
     expect(config.forceUpdate, false);
     expect(config.checkInterval, const Duration(hours: 24));
+    expect(config.showProgressDialog, true);
+    expect(config.autoCheckOnAppStart, true);
   });
 
   test('DirectUpdateConfig creation', () {
     const config = DirectUpdateConfig(
-      serverUrl: 'https://test.com',
+      serverUrl: 'https://example.com',
       versionEndpoint: '/version',
       downloadEndpoint: '/download',
     );
 
-    expect(config.serverUrl, 'https://test.com');
-    expect(config.versionCheckUrl, 'https://test.com/version');
-    expect(config.downloadUrl, 'https://test.com/download');
+    expect(config.serverUrl, 'https://example.com');
+    expect(config.versionCheckUrl, 'https://example.com/version');
+    expect(config.downloadUrl, 'https://example.com/download');
     expect(config.useStore, false);
+  });
+
+  test('UpdateInfo fromMap', () {
+    final info = UpdateInfo.fromMap({
+      'updateAvailable': true,
+      'immediateUpdateAllowed': false,
+      'flexibleUpdateAllowed': true,
+      'updatePriority': 4,
+      'forceUpdate': true,
+    });
+
+    expect(info.updateAvailable, true);
+    expect(info.immediateUpdateAllowed, false);
+    expect(info.flexibleUpdateAllowed, true);
+    expect(info.updatePriority, 4);
+    expect(info.forceUpdate, true);
+  });
+
+  test('AppUpdateInfo shouldForceUpdate considers server forceUpdate', () {
+    final info = AppUpdateInfo(
+      updateAvailable: true,
+      forceUpdate: true,
+    );
+
+    expect(info.shouldForceUpdate, true);
+  });
+
+  test('AppUpdateInfo shouldForceUpdate with high priority + immediate', () {
+    final info = AppUpdateInfo(
+      updateAvailable: true,
+      updatePriority: 5,
+      immediateUpdateAllowed: true,
+    );
+
+    expect(info.shouldForceUpdate, true);
+  });
+
+  test('AppUpdateInfo shouldForceUpdate is false without conditions', () {
+    final info = AppUpdateInfo(
+      updateAvailable: true,
+      updatePriority: 2,
+      immediateUpdateAllowed: false,
+    );
+
+    expect(info.shouldForceUpdate, false);
+  });
+
+  test('initialize stores config', () {
+    InAppUpdateMe plugin = InAppUpdateMe();
+    const config = UpdateConfig(
+      useStore: false,
+      forceUpdate: true,
+      checkInterval: Duration(hours: 1),
+    );
+
+    plugin.initialize(config);
+    expect(plugin.config, isNotNull);
+    expect(plugin.config!.useStore, false);
+    expect(plugin.config!.forceUpdate, true);
   });
 }

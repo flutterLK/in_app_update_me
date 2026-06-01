@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../in_app_update_me_platform_interface.dart';
@@ -13,14 +15,21 @@ class InAppUpdateMe {
   factory InAppUpdateMe() => _instance;
   InAppUpdateMe._internal();
 
-  final InAppUpdateMePlatform _platform = InAppUpdateMePlatform.instance;
+  InAppUpdateMePlatform get _platform => InAppUpdateMePlatform.instance;
   DefaultUpdateListener? _updateListener;
+
+  // Fix #5: Store the config
+  UpdateConfig? _config;
 
   /// Initialize the plugin with configuration
   void initialize(UpdateConfig config) {
+    _config = config;
     _updateListener = DefaultUpdateListener();
     _platform.setUpdateListener(_updateListener!);
   }
+
+  /// Get the current configuration
+  UpdateConfig? get config => _config;
 
   /// Get platform version for debugging
   Future<String?> getPlatformVersion() {
@@ -28,7 +37,7 @@ class InAppUpdateMe {
   }
 
   /// Check for available updates
-  /// 
+  ///
   /// [useStore]: Whether to check Play Store/App Store (default: true)
   /// [updateUrl]: URL to check for direct updates (required if useStore is false)
   /// [currentVersion]: Current app version (optional, auto-detected if not provided)
@@ -38,7 +47,6 @@ class InAppUpdateMe {
     String? currentVersion,
   }) async {
     try {
-      // Auto-detect current version if not provided
       if (currentVersion == null) {
         final packageInfo = await PackageInfo.fromPlatform();
         currentVersion = packageInfo.version;
@@ -63,9 +71,6 @@ class InAppUpdateMe {
   }
 
   /// Start a flexible update
-  /// For Android: Uses Google Play In-App Updates
-  /// For iOS: Downloads update in background (for enterprise/ad-hoc apps)
-  /// [downloadUrl]: Required for iOS direct updates, optional for Android
   Future<bool> startFlexibleUpdate({String? downloadUrl}) async {
     try {
       return await _platform.startFlexibleUpdate(downloadUrl: downloadUrl);
@@ -102,8 +107,6 @@ class InAppUpdateMe {
   }
 
   /// Download and install update directly
-  /// For Android: Downloads and installs APK
-  /// For iOS: Opens enterprise app URL or redirects to App Store
   Future<bool> downloadAndInstallUpdate(String downloadUrl) async {
     try {
       return await _platform.downloadAndInstallUpdate(downloadUrl);
@@ -128,6 +131,7 @@ class InAppUpdateMe {
   }
 
   /// Open App Store/Play Store for manual update
+  // Fix #7: Use iTunes lookup API for iOS instead of hardcoded URL
   Future<bool> openStore() async {
     try {
       String storeUrl;
@@ -135,8 +139,28 @@ class InAppUpdateMe {
         final packageInfo = await PackageInfo.fromPlatform();
         storeUrl = 'https://play.google.com/store/apps/details?id=${packageInfo.packageName}';
       } else if (Platform.isIOS) {
-        // This would need the actual App Store ID
-        storeUrl = 'https://apps.apple.com/app/your-app-id';
+        final packageInfo = await PackageInfo.fromPlatform();
+        final bundleId = packageInfo.packageName;
+
+        // Look up the App Store URL using iTunes API
+        try {
+          final lookupUrl = Uri.parse('https://itunes.apple.com/lookup?bundleId=$bundleId');
+          final response = await http.get(lookupUrl);
+          if (response.statusCode == 200) {
+            final json = jsonDecode(response.body);
+            final results = json['results'] as List?;
+            if (results != null && results.isNotEmpty) {
+              final trackId = results[0]['trackId'];
+              storeUrl = 'https://apps.apple.com/app/id$trackId';
+            } else {
+              storeUrl = 'https://apps.apple.com/app/$bundleId';
+            }
+          } else {
+            storeUrl = 'https://apps.apple.com/app/$bundleId';
+          }
+        } catch (_) {
+          storeUrl = 'https://apps.apple.com/app/$bundleId';
+        }
       } else {
         return false;
       }
@@ -159,6 +183,9 @@ class InAppUpdateMe {
     _updateListener = listener;
     _platform.setUpdateListener(listener);
   }
+
+  /// Get the current update listener
+  DefaultUpdateListener? get updateListener => _updateListener;
 
   /// Remove update listener
   void removeUpdateListener() {

@@ -1,10 +1,9 @@
 name: in_app_update_me
 description: A comprehensive Flutter plugin for in-app updates supporting both Android and iOS with direct update capabilities, flexible updates, and force update handling.
-version: 1.1.1
-homepage: https://github.com/atishpaul/in_app_update_me
-repository: https://github.com/atishpaul/in_app_update_me
-issue_tracker: https://github.com/atishpaul/in_app_update_me/issues
-documentation: https://github.com/atishpaul/in_app_update_me#readme
+version: 1.2.0
+homepage: https://github.com/flutterLK/in_app_update_me
+repository: https://github.com/flutterLK/in_app_update_me
+issue_tracker: https://github.com/flutterLK/in_app_update_me/issues
 
 topics:
   - in-app-update
@@ -21,11 +20,11 @@ dependencies:
   flutter:
     sdk: flutter
   plugin_platform_interface: ^2.1.7
-  http: ^1.1.0
-  path_provider: ^2.1.1
-  archive: ^3.4.9
-  package_info_plus: ^4.2.0
-  url_launcher: ^6.2.1
+  http: ^1.6.0
+  path_provider: ^2.1.5
+  archive: ^4.0.9
+  package_info_plus: ^10.1.0
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
@@ -36,7 +35,7 @@ flutter:
   plugin:
     platforms:
       android:
-        package: com.flenco.in_app_update_me
+        package: com.inappupdateme.plugin
         pluginClass: InAppUpdateMePlugin
       ios:
         pluginClass: InAppUpdateMePlugin

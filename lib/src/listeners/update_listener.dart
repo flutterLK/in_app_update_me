@@ -1,41 +1,39 @@
-import '../../in_app_update_me_platform_interface.dart';
+/// Base abstract class for update event listeners.
+abstract class UpdateListener {
+  void onUpdateDownloaded();
+  void onUpdateInstalled();
+  void onUpdateFailed(String error);
+  void onUpdateProgress(int progress);
+  void onUpdateResult(String result);
+  void onUpdateDownloadStarted();
+  void onUpdateInstallStarted();
+}
 
+/// Extended listener with default empty implementations and additional callbacks.
 abstract class AppUpdateListener extends UpdateListener {
-  /// Called when update is successfully downloaded
   @override
   void onUpdateDownloaded() {}
 
-  /// Called when update is successfully installed
   @override
   void onUpdateInstalled() {}
 
-  /// Called when update fails with an error
   @override
   void onUpdateFailed(String error) {}
 
-  /// Called during update download with progress (0-100)
   @override
   void onUpdateProgress(int progress) {}
 
-  /// Called when update flow returns a result
   @override
   void onUpdateResult(String result) {}
 
-  /// Called when update download is started (iOS)
   @override
   void onUpdateDownloadStarted() {}
 
-  /// Called when update installation is started (iOS)
   @override
   void onUpdateInstallStarted() {}
 
-  /// Called when update check is completed
   void onUpdateCheckCompleted(bool updateAvailable) {}
-
-  /// Called when user cancels update
   void onUpdateCancelled() {}
-
-  /// Called when update is not available
   void onUpdateNotAvailable() {}
 }
 
@@ -87,7 +85,7 @@ class DefaultUpdateListener extends AppUpdateListener {
   @override
   void onUpdateResult(String result) {
     onResult?.call(result);
-    
+
     switch (result) {
       case 'success':
         break;

@@ -1,15 +1,12 @@
 # in_app_update_me
 
 <div align="center">
-  <img src="https://flenco.in/wp-content/uploads/2023/09/cropped-flenco-2023.png" alt="Flenco Logo" height="80" />
-  
+
   [![Flutter](https://img.shields.io/badge/Flutter->=3.0.0-blue.svg)](https://flutter.dev/)
   [![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS-lightgrey.svg)]()
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-  
-  **A comprehensive Flutter plugin for in-app updates supporting both Android and iOS with direct update capabilities and force update handling.**
 
-  [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-atishpaul-FFDD00?style=flat&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/atishpaul)
+  **A comprehensive Flutter plugin for in-app updates supporting both Android and iOS with direct update capabilities and force update handling.**
 </div>
 
 ---
@@ -575,31 +572,9 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 💝 Support the Project
-
-If this plugin helped you, consider buying me a coffee! ☕
-
-[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-atishpaul-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/atishpaul)
-
-## 🏢 About Flenco
-
-This plugin is created and maintained by **Flenco**, a software development company specializing in mobile app development.
-
-**Website**: [https://flenco.in](https://flenco.in)
-
----
-
 ## 📚 Additional Resources
 
 - [Complete Example App](example/) - Full implementation example
-- [Testing Guide](TESTING_GUIDE.md) - Comprehensive testing instructions  
+- [Testing Guide](TESTING_GUIDE.md) - Comprehensive testing instructions
 - [Test Server](test_server/) - Mock server for development testing
 - [Changelog](CHANGELOG.md) - Version history and changes
-
----
-
-<div align="center">
-  Made with ❤️ by <a href="https://flenco.in">Flenco</a>
-  
-  <img src="https://flenco.in/wp-content/uploads/2023/09/cropped-flenco-2023.png" alt="Flenco Logo" height="40" />
-</div>

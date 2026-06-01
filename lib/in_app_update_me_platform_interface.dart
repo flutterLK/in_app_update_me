@@ -1,5 +1,11 @@
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'in_app_update_me_method_channel.dart';
+import 'src/models/update_info.dart';
+import 'src/listeners/update_listener.dart';
+
+// Re-export for backward compatibility with test mocks
+export 'src/models/update_info.dart' show UpdateInfo;
+export 'src/listeners/update_listener.dart' show UpdateListener;
 
 abstract class InAppUpdateMePlatform extends PlatformInterface {
   InAppUpdateMePlatform() : super(token: _token);
@@ -49,55 +55,4 @@ abstract class InAppUpdateMePlatform extends PlatformInterface {
   void setUpdateListener(UpdateListener listener) {
     throw UnimplementedError('setUpdateListener() has not been implemented.');
   }
-}
-
-class UpdateInfo {
-  final bool updateAvailable;
-  final bool immediateUpdateAllowed;
-  final bool flexibleUpdateAllowed;
-  final int? availableVersionCode;
-  final int? updatePriority;
-  final String? appStoreVersion;
-  final String? currentVersion;
-  final String? appStoreUrl;
-  final bool? directUpdate;
-  final String? downloadUrl;
-
-  UpdateInfo({
-    required this.updateAvailable,
-    this.immediateUpdateAllowed = false,
-    this.flexibleUpdateAllowed = false,
-    this.availableVersionCode,
-    this.updatePriority,
-    this.appStoreVersion,
-    this.currentVersion,
-    this.appStoreUrl,
-    this.directUpdate,
-    this.downloadUrl,
-  });
-
-  factory UpdateInfo.fromMap(Map<String, dynamic> map) {
-    return UpdateInfo(
-      updateAvailable: map['updateAvailable'] ?? false,
-      immediateUpdateAllowed: map['immediateUpdateAllowed'] ?? false,
-      flexibleUpdateAllowed: map['flexibleUpdateAllowed'] ?? false,
-      availableVersionCode: map['availableVersionCode'],
-      updatePriority: map['updatePriority'],
-      appStoreVersion: map['appStoreVersion'],
-      currentVersion: map['currentVersion'],
-      appStoreUrl: map['appStoreUrl'],
-      directUpdate: map['directUpdate'],
-      downloadUrl: map['downloadUrl'],
-    );
-  }
-}
-
-abstract class UpdateListener {
-  void onUpdateDownloaded();
-  void onUpdateInstalled();
-  void onUpdateFailed(String error);
-  void onUpdateProgress(int progress);
-  void onUpdateResult(String result);
-  void onUpdateDownloadStarted();
-  void onUpdateInstallStarted();
 }

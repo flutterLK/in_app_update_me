@@ -1,5 +1,49 @@
-import '../../in_app_update_me_platform_interface.dart';
+/// Platform-level update info returned from native code.
+class UpdateInfo {
+  final bool updateAvailable;
+  final bool immediateUpdateAllowed;
+  final bool flexibleUpdateAllowed;
+  final int? availableVersionCode;
+  final int? updatePriority;
+  final String? appStoreVersion;
+  final String? currentVersion;
+  final String? appStoreUrl;
+  final bool? directUpdate;
+  final String? downloadUrl;
+  final bool forceUpdate;
 
+  UpdateInfo({
+    required this.updateAvailable,
+    this.immediateUpdateAllowed = false,
+    this.flexibleUpdateAllowed = false,
+    this.availableVersionCode,
+    this.updatePriority,
+    this.appStoreVersion,
+    this.currentVersion,
+    this.appStoreUrl,
+    this.directUpdate,
+    this.downloadUrl,
+    this.forceUpdate = false,
+  });
+
+  factory UpdateInfo.fromMap(Map<String, dynamic> map) {
+    return UpdateInfo(
+      updateAvailable: map['updateAvailable'] ?? false,
+      immediateUpdateAllowed: map['immediateUpdateAllowed'] ?? false,
+      flexibleUpdateAllowed: map['flexibleUpdateAllowed'] ?? false,
+      availableVersionCode: map['availableVersionCode'],
+      updatePriority: map['updatePriority'],
+      appStoreVersion: map['appStoreVersion'],
+      currentVersion: map['currentVersion'],
+      appStoreUrl: map['appStoreUrl'],
+      directUpdate: map['directUpdate'],
+      downloadUrl: map['downloadUrl'],
+      forceUpdate: map['forceUpdate'] ?? false,
+    );
+  }
+}
+
+/// Public-facing update info model with computed properties.
 class AppUpdateInfo {
   final bool updateAvailable;
   final bool immediateUpdateAllowed;
@@ -11,6 +55,7 @@ class AppUpdateInfo {
   final String? appStoreUrl;
   final bool? directUpdate;
   final String? downloadUrl;
+  final bool forceUpdate;
 
   AppUpdateInfo({
     required this.updateAvailable,
@@ -23,6 +68,7 @@ class AppUpdateInfo {
     this.appStoreUrl,
     this.directUpdate,
     this.downloadUrl,
+    this.forceUpdate = false,
   });
 
   factory AppUpdateInfo.fromPlatformUpdateInfo(UpdateInfo platformInfo) {
@@ -37,6 +83,7 @@ class AppUpdateInfo {
       appStoreUrl: platformInfo.appStoreUrl,
       directUpdate: platformInfo.directUpdate,
       downloadUrl: platformInfo.downloadUrl,
+      forceUpdate: platformInfo.forceUpdate,
     );
   }
 
@@ -46,8 +93,9 @@ class AppUpdateInfo {
   /// Check if this is a medium priority update
   bool get isMediumPriority => updatePriority != null && updatePriority! >= 2;
 
-  /// Check if immediate update is recommended
-  bool get shouldForceUpdate => isHighPriority && immediateUpdateAllowed;
+  // Fix #15: Consider server-declared force update OR high priority + immediate allowed
+  bool get shouldForceUpdate =>
+      forceUpdate || (isHighPriority && immediateUpdateAllowed);
 
   @override
   String toString() {
@@ -60,7 +108,8 @@ class AppUpdateInfo {
         'appStoreVersion: $appStoreVersion, '
         'currentVersion: $currentVersion, '
         'directUpdate: $directUpdate, '
-        'downloadUrl: $downloadUrl'
+        'downloadUrl: $downloadUrl, '
+        'forceUpdate: $forceUpdate'
         ')';
   }
 }

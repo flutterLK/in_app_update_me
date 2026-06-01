@@ -24,7 +24,6 @@ class ForceUpdateDialog extends StatefulWidget {
   @override
   State<ForceUpdateDialog> createState() => _ForceUpdateDialogState();
 
-  /// Show force update dialog that cannot be dismissed
   static Future<void> show(
     BuildContext context,
     AppUpdateInfo updateInfo,
@@ -54,32 +53,48 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
   int _downloadProgress = 0;
   String _statusMessage = '';
 
+  // Fix #14: Save and restore the user's original listener
+  DefaultUpdateListener? _previousListener;
+
   @override
   void initState() {
     super.initState();
+    _previousListener = InAppUpdateMe().updateListener;
     _setupUpdateListener();
+  }
+
+  @override
+  void dispose() {
+    // Restore the user's original listener
+    if (_previousListener != null) {
+      InAppUpdateMe().setUpdateListener(_previousListener!);
+    }
+    super.dispose();
   }
 
   void _setupUpdateListener() {
     InAppUpdateMe().setUpdateListener(DefaultUpdateListener(
       onProgress: (progress) {
+        if (!mounted) return;
         setState(() {
           _downloadProgress = progress;
           _statusMessage = 'Downloading... $progress%';
         });
       },
       onDownloaded: () {
+        if (!mounted) return;
         setState(() {
           _statusMessage = 'Download completed. Installing...';
         });
       },
       onInstalled: () {
+        if (!mounted) return;
         setState(() {
           _statusMessage = 'Update installed successfully!';
         });
-        // App will restart after installation
       },
       onFailed: (error) {
+        if (!mounted) return;
         setState(() {
           _isUpdating = false;
           _statusMessage = 'Update failed: $error';
@@ -88,7 +103,6 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
       },
       onResult: (result) {
         if (result == 'cancelled') {
-          // For force updates, we don't allow cancellation
           _startUpdate();
         }
       },
@@ -118,7 +132,7 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
         );
       }
 
-      if (!success) {
+      if (!success && mounted) {
         setState(() {
           _isUpdating = false;
           _statusMessage = 'Failed to start update';
@@ -126,11 +140,13 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
         widget.onError?.call('Failed to start update');
       }
     } catch (e) {
-      setState(() {
-        _isUpdating = false;
-        _statusMessage = 'Update error: $e';
-      });
-      widget.onError?.call(e.toString());
+      if (mounted) {
+        setState(() {
+          _isUpdating = false;
+          _statusMessage = 'Update error: $e';
+        });
+        widget.onError?.call(e.toString());
+      }
     }
   }
 
@@ -173,8 +189,8 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
       actions: [
         if (!_isUpdating) ...[
           TextButton(
-            onPressed: widget.dismissible 
-                ? () => Navigator.pop(context) 
+            onPressed: widget.dismissible
+                ? () => Navigator.pop(context)
                 : () => SystemNavigator.pop(),
             child: Text(
               widget.dismissible ? 'Later' : 'Exit App',
@@ -203,4 +219,3 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
     );
   }
 }
-
