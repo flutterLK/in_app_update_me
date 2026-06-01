@@ -1,3 +1,13 @@
+import 'network_config.dart';
+
+/// Update channel for targeting specific release tracks.
+enum UpdateChannel {
+  stable,
+  beta,
+  canary,
+  internal,
+}
+
 class UpdateConfig {
   final bool useStore;
   final String? updateUrl;
@@ -8,6 +18,21 @@ class UpdateConfig {
   final bool autoCheckOnAppStart;
   final UpdatePriority minimumPriority;
 
+  /// Network requirements for downloading updates.
+  final NetworkConfig? networkConfig;
+
+  /// URL for fetching server-side update configuration.
+  final String? serverConfigUrl;
+
+  /// Custom headers for server config requests.
+  final Map<String, String>? serverHeaders;
+
+  /// User identifier for A/B testing bucket assignment.
+  final String? userId;
+
+  /// Update channel (stable, beta, canary, internal).
+  final UpdateChannel channel;
+
   const UpdateConfig({
     this.useStore = true,
     this.updateUrl,
@@ -17,6 +42,11 @@ class UpdateConfig {
     this.showProgressDialog = true,
     this.autoCheckOnAppStart = true,
     this.minimumPriority = UpdatePriority.low,
+    this.networkConfig,
+    this.serverConfigUrl,
+    this.serverHeaders,
+    this.userId,
+    this.channel = UpdateChannel.stable,
   });
 
   UpdateConfig copyWith({
@@ -28,6 +58,11 @@ class UpdateConfig {
     bool? showProgressDialog,
     bool? autoCheckOnAppStart,
     UpdatePriority? minimumPriority,
+    NetworkConfig? networkConfig,
+    String? serverConfigUrl,
+    Map<String, String>? serverHeaders,
+    String? userId,
+    UpdateChannel? channel,
   }) {
     return UpdateConfig(
       useStore: useStore ?? this.useStore,
@@ -38,6 +73,11 @@ class UpdateConfig {
       showProgressDialog: showProgressDialog ?? this.showProgressDialog,
       autoCheckOnAppStart: autoCheckOnAppStart ?? this.autoCheckOnAppStart,
       minimumPriority: minimumPriority ?? this.minimumPriority,
+      networkConfig: networkConfig ?? this.networkConfig,
+      serverConfigUrl: serverConfigUrl ?? this.serverConfigUrl,
+      serverHeaders: serverHeaders ?? this.serverHeaders,
+      userId: userId ?? this.userId,
+      channel: channel ?? this.channel,
     );
   }
 
@@ -50,7 +90,8 @@ class UpdateConfig {
         'checkInterval: $checkInterval, '
         'showProgressDialog: $showProgressDialog, '
         'autoCheckOnAppStart: $autoCheckOnAppStart, '
-        'minimumPriority: $minimumPriority'
+        'minimumPriority: $minimumPriority, '
+        'channel: $channel'
         ')';
   }
 }
@@ -84,10 +125,13 @@ class DirectUpdateConfig extends UpdateConfig {
     super.showProgressDialog = true,
     super.autoCheckOnAppStart = true,
     super.minimumPriority = UpdatePriority.low,
+    super.networkConfig,
+    super.userId,
+    super.channel,
   });
 
   String get versionCheckUrl => serverUrl + versionEndpoint;
-  String get downloadUrl => serverUrl + downloadEndpoint;
+  String get directDownloadUrl => serverUrl + downloadEndpoint;
 
   @override
   DirectUpdateConfig copyWith({
@@ -104,6 +148,11 @@ class DirectUpdateConfig extends UpdateConfig {
     bool? showProgressDialog,
     bool? autoCheckOnAppStart,
     UpdatePriority? minimumPriority,
+    NetworkConfig? networkConfig,
+    String? serverConfigUrl,
+    Map<String, String>? serverHeaders,
+    String? userId,
+    UpdateChannel? channel,
   }) {
     return DirectUpdateConfig(
       serverUrl: serverUrl ?? this.serverUrl,
@@ -117,6 +166,9 @@ class DirectUpdateConfig extends UpdateConfig {
       showProgressDialog: showProgressDialog ?? this.showProgressDialog,
       autoCheckOnAppStart: autoCheckOnAppStart ?? this.autoCheckOnAppStart,
       minimumPriority: minimumPriority ?? this.minimumPriority,
+      networkConfig: networkConfig ?? this.networkConfig,
+      userId: userId ?? this.userId,
+      channel: channel ?? this.channel,
     );
   }
 }

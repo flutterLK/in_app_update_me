@@ -55,7 +55,12 @@ class InAppUpdateMePlugin: FlutterPlugin, MethodCallHandler, ActivityAware, Plug
         val totalBytesToDownload = state.totalBytesToDownload()
         if (totalBytesToDownload > 0) {
           val progress = ((bytesDownloaded * 100) / totalBytesToDownload).toInt()
-          channel.invokeMethod("onUpdateProgress", mapOf("progress" to progress))
+          channel.invokeMethod("onUpdateProgress", mapOf(
+            "progress" to progress,
+            "bytesDownloaded" to bytesDownloaded,
+            "totalBytes" to totalBytesToDownload,
+            "state" to "downloading"
+          ))
         }
       }
     }
@@ -304,7 +309,12 @@ class InAppUpdateMePlugin: FlutterPlugin, MethodCallHandler, ActivityAware, Plug
                 if (totalBytes > 0) {
                   val progress = ((downloadedBytes * 100) / totalBytes).toInt()
                   withContext(Dispatchers.Main) {
-                    channel.invokeMethod("onUpdateProgress", mapOf("progress" to progress))
+                    channel.invokeMethod("onUpdateProgress", mapOf(
+                      "progress" to progress,
+                      "bytesDownloaded" to downloadedBytes,
+                      "totalBytes" to totalBytes,
+                      "state" to "downloading"
+                    ))
                   }
                 }
               }

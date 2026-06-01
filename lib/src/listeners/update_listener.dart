@@ -1,9 +1,12 @@
+import '../models/download_progress.dart';
+
 /// Base abstract class for update event listeners.
 abstract class UpdateListener {
   void onUpdateDownloaded();
   void onUpdateInstalled();
   void onUpdateFailed(String error);
   void onUpdateProgress(int progress);
+  void onUpdateProgressDetail(DownloadProgress progress) {}
   void onUpdateResult(String result);
   void onUpdateDownloadStarted();
   void onUpdateInstallStarted();
@@ -24,6 +27,9 @@ abstract class AppUpdateListener extends UpdateListener {
   void onUpdateProgress(int progress) {}
 
   @override
+  void onUpdateProgressDetail(DownloadProgress progress) {}
+
+  @override
   void onUpdateResult(String result) {}
 
   @override
@@ -42,6 +48,7 @@ class DefaultUpdateListener extends AppUpdateListener {
   final Function()? onInstalled;
   final Function(String)? onFailed;
   final Function(int)? onProgress;
+  final Function(DownloadProgress)? onProgressDetail;
   final Function(String)? onResult;
   final Function(bool)? onCheckCompleted;
   final Function()? onCancelled;
@@ -54,6 +61,7 @@ class DefaultUpdateListener extends AppUpdateListener {
     this.onInstalled,
     this.onFailed,
     this.onProgress,
+    this.onProgressDetail,
     this.onResult,
     this.onCheckCompleted,
     this.onCancelled,
@@ -80,6 +88,13 @@ class DefaultUpdateListener extends AppUpdateListener {
   @override
   void onUpdateProgress(int progress) {
     onProgress?.call(progress);
+  }
+
+  @override
+  void onUpdateProgressDetail(DownloadProgress progress) {
+    onProgressDetail?.call(progress);
+    // Also call the simple progress callback for backward compatibility
+    onProgress?.call(progress.progress);
   }
 
   @override

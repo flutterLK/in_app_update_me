@@ -356,7 +356,12 @@ public class InAppUpdateMePlugin: NSObject, FlutterPlugin, URLSessionDownloadDel
         let progress = totalBytesExpectedToWrite > 0 ? Int((Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)) * 100) : 0
 
         DispatchQueue.main.async { [weak self] in
-            self?.channel?.invokeMethod("onUpdateProgress", arguments: ["progress": progress])
+            self?.channel?.invokeMethod("onUpdateProgress", arguments: [
+                "progress": progress,
+                "bytesDownloaded": totalBytesWritten,
+                "totalBytes": totalBytesExpectedToWrite,
+                "state": "downloading"
+            ])
         }
     }
 

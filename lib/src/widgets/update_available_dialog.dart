@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/update_info.dart';
 import '../models/update_config.dart';
 import '../in_app_update_me.dart';
+import 'update_theme.dart';
 
 class UpdateAvailableDialog extends StatelessWidget {
   final AppUpdateInfo updateInfo;
@@ -9,6 +10,7 @@ class UpdateAvailableDialog extends StatelessWidget {
   final VoidCallback? onUpdateStarted;
   final VoidCallback? onUpdateLater;
   final Function(String)? onError;
+  final UpdateDialogTheme? theme;
 
   const UpdateAvailableDialog({
     Key? key,
@@ -17,66 +19,82 @@ class UpdateAvailableDialog extends StatelessWidget {
     this.onUpdateStarted,
     this.onUpdateLater,
     this.onError,
+    this.theme,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final isHighPriority = updateInfo.isHighPriority;
     final shouldForceUpdate = updateInfo.shouldForceUpdate || config.forceUpdate;
+    final primaryColor = theme?.primaryColor ?? (isHighPriority ? Colors.orange : Colors.blue);
 
     return AlertDialog(
-      title: Row(
-        children: [
-          Icon(
-            isHighPriority ? Icons.priority_high : Icons.system_update,
-            color: isHighPriority ? Colors.orange : Colors.blue,
-          ),
-          const SizedBox(width: 8),
-          Text(shouldForceUpdate ? 'Update Required' : 'Update Available'),
-        ],
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            shouldForceUpdate
-                ? 'A critical update is available and required to continue using this app.'
-                : 'A new version of this app is available.',
-            style: const TextStyle(fontSize: 16),
-          ),
-          const SizedBox(height: 16),
-          if (updateInfo.appStoreVersion != null) ...[
-            _buildVersionInfo(),
-            const SizedBox(height: 16),
-          ],
-          if (updateInfo.updatePriority != null) ...[
-            _buildPriorityInfo(),
-            const SizedBox(height: 16),
-          ],
-          if (isHighPriority)
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+      backgroundColor: theme?.backgroundColor,
+      shape: theme?.borderRadius != null
+          ? RoundedRectangleBorder(borderRadius: theme!.borderRadius!)
+          : null,
+      title: theme?.customTitle ??
+          Row(
+            children: [
+              Icon(
+                theme?.updateIcon ?? (isHighPriority ? Icons.priority_high : Icons.system_update),
+                color: theme?.iconColor ?? primaryColor,
               ),
-              child: const Row(
-                children: [
-                  Icon(Icons.warning, color: Colors.orange, size: 20),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'This is a high priority update with important improvements.',
-                      style: TextStyle(fontSize: 12, color: Colors.orange),
-                    ),
+              const SizedBox(width: 8),
+              Text(
+                theme?.titleText ?? (shouldForceUpdate ? 'Update Required' : 'Update Available'),
+                style: theme?.titleStyle,
+              ),
+            ],
+          ),
+      content: theme?.customContentBuilder?.call(context, updateInfo) ??
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                theme?.descriptionText ??
+                    (shouldForceUpdate
+                        ? 'A critical update is available and required to continue using this app.'
+                        : 'A new version of this app is available.'),
+                style: theme?.bodyStyle ?? const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              if (updateInfo.appStoreVersion != null) ...[
+                _buildVersionInfo(),
+                const SizedBox(height: 16),
+              ],
+              if (updateInfo.updatePriority != null) ...[
+                _buildPriorityInfo(),
+                const SizedBox(height: 16),
+              ],
+              if (isHighPriority)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
                   ),
-                ],
-              ),
-            ),
-        ],
-      ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.warning, color: Colors.orange, size: 20),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'This is a high priority update with important improvements.',
+                          style: TextStyle(fontSize: 12, color: Colors.orange),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (updateInfo.releaseNotes != null && updateInfo.releaseNotes!.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                _buildReleaseNotes(),
+              ],
+            ],
+          ),
       actions: [
         if (!shouldForceUpdate) ...[
           TextButton(
@@ -84,7 +102,8 @@ class UpdateAvailableDialog extends StatelessWidget {
               Navigator.pop(context);
               onUpdateLater?.call();
             },
-            child: const Text('Later'),
+            style: theme?.laterButtonStyle,
+            child: Text(theme?.laterButtonText ?? 'Later'),
           ),
           if (updateInfo.flexibleUpdateAllowed)
             TextButton(
@@ -94,11 +113,12 @@ class UpdateAvailableDialog extends StatelessWidget {
         ],
         ElevatedButton(
           onPressed: () => _startUpdate(context),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isHighPriority ? Colors.orange : Colors.blue,
-            foregroundColor: Colors.white,
-          ),
-          child: Text(shouldForceUpdate ? 'Update Now' : 'Update'),
+          style: theme?.updateButtonStyle ??
+              ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+              ),
+          child: Text(theme?.updateButtonText ?? (shouldForceUpdate ? 'Update Now' : 'Update')),
         ),
       ],
     );
@@ -153,6 +173,33 @@ class UpdateAvailableDialog extends StatelessWidget {
     );
   }
 
+  Widget _buildReleaseNotes() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "What's New",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            updateInfo.releaseNotes!,
+            style: const TextStyle(fontSize: 13),
+            maxLines: 5,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _startUpdate(BuildContext context) async {
     Navigator.pop(context);
     onUpdateStarted?.call();
@@ -201,6 +248,7 @@ class UpdateAvailableDialog extends StatelessWidget {
     VoidCallback? onUpdateStarted,
     VoidCallback? onUpdateLater,
     Function(String)? onError,
+    UpdateDialogTheme? theme,
   }) {
     return showDialog<void>(
       context: context,
@@ -211,6 +259,7 @@ class UpdateAvailableDialog extends StatelessWidget {
         onUpdateStarted: onUpdateStarted,
         onUpdateLater: onUpdateLater,
         onError: onError,
+        theme: theme,
       ),
     );
   }

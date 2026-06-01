@@ -8,12 +8,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
-- Server-side update configuration
-- A/B testing support for updates
-- Update rollback functionality
-- Enhanced progress reporting
-- Additional UI customization options
-- Analytics integration
+- Swift Package Manager support for iOS
+- Custom notification delegate for cross-platform notifications
+
+## [2.0.0] - 2026-06-01
+
+### Added
+- **Server-side update configuration**: Fetch remote config from a server with `RemoteUpdateConfig`, `RemoteConfigData`, `RemoteConfigProvider`, and `CachedRemoteConfig`. Supports caching, custom headers, and automatic expiry.
+- **A/B testing support**: `ABTestConfig`, `ABTestManager`, and `ExperimentManager` for deterministic variant assignment based on user ID. Supports remote variant fetching.
+- **Update rollback**: `RollbackManager` with `VersionSnapshot` tracking stored in SharedPreferences. `RollbackConfig` and `RollbackInfo` models for controlling rollback behavior.
+- **Enhanced progress reporting**: `DownloadProgress` model with `bytesDownloaded`, `totalBytes`, `speedBytesPerSec`, `estimatedTimeRemaining`, and `DownloadState` enum. `onProgressDetail` callback on `DefaultUpdateListener`. Native code now sends detailed progress maps.
+- **UI customization**: `UpdateDialogTheme` with colors, styles, button styles, icons, custom title/content builders. All dialog widgets accept optional theme parameter.
+- **Analytics integration**: `UpdateAnalyticsProvider` abstract interface, `UpdateAnalyticsEvent` model with 12 event types, `AnalyticsManager` for tracking, `CompositeAnalyticsProvider` for multi-provider support.
+- **Network-aware updates**: `NetworkConfig` with `wifiOnlyPolicy` and `unrestricted` presets. Added to `UpdateConfig.networkPolicy`.
+- **Scheduled update checks**: `startScheduledChecks()` and `stopScheduledChecks()` on `InAppUpdateMe` with configurable interval.
+- **Release notes display**: `releaseNotes` field on `AppUpdateInfo` and `UpdateInfo`. Dialogs show "What's New" section when release notes are available.
+- **i18n support**: `UpdateStrings` with translations for English, Spanish, French, German, Japanese, Chinese, Korean, and Portuguese. `UpdateStrings.of(context)` for locale-aware strings.
+- **Update channels**: `UpdateChannel` enum (stable, beta, canary, internal) added to `UpdateConfig`.
+- **Remote config in checkForUpdate**: `checkForUpdate()` now automatically fetches remote config if `serverConfigUrl` is set, merging server values with local defaults.
+- **Download resume support**: Native code sends `bytesDownloaded` and `totalBytes` in progress callbacks for future resume capability.
+
+### Changed
+- Version bumped to 2.0.0
+- `UpdateConfig` now accepts `networkConfig`, `serverConfigUrl`, `serverHeaders`, `userId`, and `channel` parameters
+- `AppUpdateInfo` now includes `releaseNotes` field
+- `UpdateListener.onUpdateProgressDetail()` added alongside existing `onUpdateProgress()`
+- `DefaultUpdateListener` accepts `onProgressDetail` callback
+- All dialog widgets now accept optional `UpdateDialogTheme` parameter
+- `shared_preferences` added as dependency for rollback storage
 
 ## [1.2.0] - 2026-06-01
 

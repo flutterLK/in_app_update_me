@@ -11,6 +11,7 @@ class UpdateInfo {
   final bool? directUpdate;
   final String? downloadUrl;
   final bool forceUpdate;
+  final String? releaseNotes;
 
   UpdateInfo({
     required this.updateAvailable,
@@ -24,6 +25,7 @@ class UpdateInfo {
     this.directUpdate,
     this.downloadUrl,
     this.forceUpdate = false,
+    this.releaseNotes,
   });
 
   factory UpdateInfo.fromMap(Map<String, dynamic> map) {
@@ -39,6 +41,7 @@ class UpdateInfo {
       directUpdate: map['directUpdate'],
       downloadUrl: map['downloadUrl'],
       forceUpdate: map['forceUpdate'] ?? false,
+      releaseNotes: map['releaseNotes'],
     );
   }
 }
@@ -56,6 +59,7 @@ class AppUpdateInfo {
   final bool? directUpdate;
   final String? downloadUrl;
   final bool forceUpdate;
+  final String? releaseNotes;
 
   AppUpdateInfo({
     required this.updateAvailable,
@@ -69,6 +73,7 @@ class AppUpdateInfo {
     this.directUpdate,
     this.downloadUrl,
     this.forceUpdate = false,
+    this.releaseNotes,
   });
 
   factory AppUpdateInfo.fromPlatformUpdateInfo(UpdateInfo platformInfo) {
@@ -84,6 +89,7 @@ class AppUpdateInfo {
       directUpdate: platformInfo.directUpdate,
       downloadUrl: platformInfo.downloadUrl,
       forceUpdate: platformInfo.forceUpdate,
+      releaseNotes: platformInfo.releaseNotes,
     );
   }
 
@@ -109,7 +115,8 @@ class AppUpdateInfo {
         'currentVersion: $currentVersion, '
         'directUpdate: $directUpdate, '
         'downloadUrl: $downloadUrl, '
-        'forceUpdate: $forceUpdate'
+        'forceUpdate: $forceUpdate, '
+        'releaseNotes: $releaseNotes'
         ')';
   }
 }

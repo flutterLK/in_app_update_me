@@ -1,11 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'in_app_update_me_platform_interface.dart';
+import 'src/models/download_progress.dart';
 
 class MethodChannelInAppUpdateMe extends InAppUpdateMePlatform {
   @visibleForTesting
   final methodChannel = const MethodChannel('in_app_update_me');
-  
+
   UpdateListener? _listener;
 
   MethodChannelInAppUpdateMe() {
@@ -27,8 +28,7 @@ class MethodChannelInAppUpdateMe extends InAppUpdateMePlatform {
         _listener!.onUpdateFailed(error);
         break;
       case 'onUpdateProgress':
-        final progress = call.arguments['progress'] ?? 0;
-        _listener!.onUpdateProgress(progress);
+        _handleProgress(call.arguments);
         break;
       case 'onUpdateResult':
         final result = call.arguments['result'] ?? 'unknown';
@@ -40,6 +40,33 @@ class MethodChannelInAppUpdateMe extends InAppUpdateMePlatform {
       case 'onUpdateInstallStarted':
         _listener!.onUpdateInstallStarted();
         break;
+    }
+  }
+
+  void _handleProgress(dynamic arguments) {
+    final args = Map<String, dynamic>.from(arguments ?? {});
+    final progress = args['progress'] ?? 0;
+
+    // Fire the simple callback for backward compatibility
+    _listener!.onUpdateProgress(progress);
+
+    // Fire detailed callback with DownloadProgress if extended data is present
+    final bytesDownloaded = args['bytesDownloaded'];
+    final totalBytes = args['totalBytes'];
+    if (bytesDownloaded != null || totalBytes != null) {
+      final stateName = args['state'] as String?;
+      final state = DownloadState.values.firstWhere(
+        (s) => s.name == stateName,
+        orElse: () => DownloadState.downloading,
+      );
+
+      final detailedProgress = DownloadProgress(
+        progress: progress,
+        bytesDownloaded: bytesDownloaded ?? 0,
+        totalBytes: totalBytes ?? -1,
+        state: state,
+      );
+      _listener!.onUpdateProgressDetail(detailedProgress);
     }
   }
 
@@ -59,13 +86,13 @@ class MethodChannelInAppUpdateMe extends InAppUpdateMePlatform {
       final result = await methodChannel.invokeMethod<Map<String, dynamic>>(
         'checkForUpdate',
         {
-          'usePlayStore': useStore, // Android
-          'useAppStore': useStore,  // iOS
+          'usePlayStore': useStore,
+          'useAppStore': useStore,
           'updateUrl': updateUrl,
           'currentVersion': currentVersion,
         },
       );
-      
+
       if (result != null) {
         return UpdateInfo.fromMap(result);
       }
@@ -124,7 +151,7 @@ class MethodChannelInAppUpdateMe extends InAppUpdateMePlatform {
   Future<bool> downloadAndInstallUpdate(String downloadUrl) async {
     try {
       final result = await methodChannel.invokeMethod<bool>(
-        'downloadAndInstallApk', // This handles both APK and IPA
+        'downloadAndInstallApk',
         {'downloadUrl': downloadUrl},
       );
       return result ?? false;
@@ -143,7 +170,7 @@ class MethodChannelInAppUpdateMe extends InAppUpdateMePlatform {
       return result ?? false;
     } catch (e) {
       if (kDebugMode) {
-        print('Error checking if update is available: $e');
+        print('Error checking update availability: $e');
       }
       return false;
     }

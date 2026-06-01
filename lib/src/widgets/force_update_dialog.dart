@@ -4,6 +4,7 @@ import '../models/update_info.dart';
 import '../in_app_update_me.dart';
 import '../models/update_config.dart';
 import '../listeners/update_listener.dart';
+import 'update_theme.dart';
 
 class ForceUpdateDialog extends StatefulWidget {
   final AppUpdateInfo updateInfo;
@@ -11,6 +12,7 @@ class ForceUpdateDialog extends StatefulWidget {
   final VoidCallback? onUpdateStarted;
   final Function(String)? onError;
   final bool dismissible;
+  final UpdateDialogTheme? theme;
 
   const ForceUpdateDialog({
     Key? key,
@@ -19,6 +21,7 @@ class ForceUpdateDialog extends StatefulWidget {
     this.onUpdateStarted,
     this.onError,
     this.dismissible = false,
+    this.theme,
   }) : super(key: key);
 
   @override
@@ -30,6 +33,7 @@ class ForceUpdateDialog extends StatefulWidget {
     UpdateConfig config, {
     VoidCallback? onUpdateStarted,
     Function(String)? onError,
+    UpdateDialogTheme? theme,
   }) {
     return showDialog<void>(
       context: context,
@@ -42,6 +46,7 @@ class ForceUpdateDialog extends StatefulWidget {
           onUpdateStarted: onUpdateStarted,
           onError: onError,
           dismissible: false,
+          theme: theme,
         ),
       ),
     );
@@ -52,8 +57,6 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
   bool _isUpdating = false;
   int _downloadProgress = 0;
   String _statusMessage = '';
-
-  // Fix #14: Save and restore the user's original listener
   DefaultUpdateListener? _previousListener;
 
   @override
@@ -65,7 +68,6 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
 
   @override
   void dispose() {
-    // Restore the user's original listener
     if (_previousListener != null) {
       InAppUpdateMe().setUpdateListener(_previousListener!);
     }
@@ -152,67 +154,99 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = widget.theme;
+    final primaryColor = theme?.primaryColor ?? Colors.red;
+
     return AlertDialog(
-      title: const Row(
-        children: [
-          Icon(Icons.system_update, color: Colors.red),
-          SizedBox(width: 8),
-          Text('Update Required'),
-        ],
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'A new version of this app is available and required to continue.',
-            style: TextStyle(fontSize: 16),
+      backgroundColor: theme?.backgroundColor,
+      shape: theme?.borderRadius != null
+          ? RoundedRectangleBorder(borderRadius: theme!.borderRadius!)
+          : null,
+      title: theme?.customTitle ??
+          Row(
+            children: [
+              Icon(theme?.updateIcon ?? Icons.system_update, color: theme?.iconColor ?? primaryColor),
+              const SizedBox(width: 8),
+              Text(
+                theme?.titleText ?? 'Update Required',
+                style: theme?.titleStyle,
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          if (widget.updateInfo.appStoreVersion != null) ...[
-            Text('Current Version: ${widget.updateInfo.currentVersion ?? 'Unknown'}'),
-            Text('New Version: ${widget.updateInfo.appStoreVersion}'),
-            const SizedBox(height: 16),
-          ],
-          if (_isUpdating) ...[
-            LinearProgressIndicator(
-              value: _downloadProgress > 0 ? _downloadProgress / 100 : null,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _statusMessage,
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-          ],
-        ],
-      ),
+      content: theme?.customContentBuilder?.call(context, widget.updateInfo) ??
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                theme?.descriptionText ?? 'A new version of this app is available and required to continue.',
+                style: theme?.bodyStyle ?? const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              if (widget.updateInfo.appStoreVersion != null) ...[
+                Text('Current Version: ${widget.updateInfo.currentVersion ?? 'Unknown'}'),
+                Text('New Version: ${widget.updateInfo.appStoreVersion}'),
+                const SizedBox(height: 16),
+              ],
+              if (widget.updateInfo.releaseNotes != null && widget.updateInfo.releaseNotes!.isNotEmpty) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("What's New", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      const SizedBox(height: 8),
+                      Text(widget.updateInfo.releaseNotes!, style: const TextStyle(fontSize: 13), maxLines: 5, overflow: TextOverflow.ellipsis),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              if (_isUpdating) ...[
+                LinearProgressIndicator(
+                  value: _downloadProgress > 0 ? _downloadProgress / 100 : null,
+                  color: theme?.progressColor ?? primaryColor,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _statusMessage,
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              ],
+            ],
+          ),
       actions: [
         if (!_isUpdating) ...[
           TextButton(
             onPressed: widget.dismissible
                 ? () => Navigator.pop(context)
                 : () => SystemNavigator.pop(),
+            style: theme?.laterButtonStyle,
             child: Text(
-              widget.dismissible ? 'Later' : 'Exit App',
+              theme?.laterButtonText ?? (widget.dismissible ? 'Later' : 'Exit App'),
               style: TextStyle(
-                color: widget.dismissible ? Colors.grey : Colors.red,
+                color: widget.dismissible ? Colors.grey : primaryColor,
               ),
             ),
           ),
           ElevatedButton(
             onPressed: _startUpdate,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Update Now'),
+            style: theme?.updateButtonStyle ??
+                ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.white,
+                ),
+            child: Text(theme?.updateButtonText ?? 'Update Now'),
           ),
         ] else ...[
           const SizedBox(
             width: 100,
-            child: Center(
-              child: Text('Updating...'),
-            ),
+            child: Center(child: Text('Updating...')),
           ),
         ],
       ],
